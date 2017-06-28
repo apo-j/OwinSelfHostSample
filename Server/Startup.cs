@@ -1,0 +1,44 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Net.Http.Formatting;
+using System.Web.Http;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
+using Owin;
+
+namespace Server
+{
+    public class Startup
+    {
+        public void Configuration(IAppBuilder appBuilder)
+        {
+            // Configure Web API for self-host. 
+            HttpConfiguration config = new HttpConfiguration();
+
+            var defaultSettings = new JsonSerializerSettings
+            {
+                Formatting = Formatting.Indented,
+                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                Converters = new List<JsonConverter>
+                        {
+                            new StringEnumConverter{ CamelCaseText = true },
+                        }
+            };
+
+            JsonConvert.DefaultSettings = () => { return defaultSettings; };
+
+            config.Formatters.Clear();
+            config.Formatters.Add(new JsonMediaTypeFormatter());
+            config.Formatters.JsonFormatter.SerializerSettings = defaultSettings;
+            config.Routes.MapHttpRoute(
+                name: "DefaultApi",
+                routeTemplate: "api/{controller}/{id}",
+                defaults: new { id = RouteParameter.Optional }
+            );
+
+            config.MapHttpAttributeRoutes();
+            appBuilder.UseWebApi(config);
+        }
+    }
+}
